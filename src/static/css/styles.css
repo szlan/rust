@@ -1,0 +1,111 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+#news-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.news-item {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 10px;
+    padding: 20px;
+    width: 300px;
+}
+
+.news-item h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.news-item p {
+    color: #666;
+}
+
+#category-nav {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#category-nav button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+#user-info {
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+#user-info a {
+    margin-left: 10px;
+}
+
+    /* 自定义按钮颜色 */
+ .btn-purple {
+     color: #fff;
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+ }
+.btn-purple:hover {
+    color: #fff;
+    background-color: #5a32a3;
+    border-color: #543099;
+}
+    
+.btn-teal {
+    color: #fff;
+    background-color: #20c997;
+    border-color: #20c997;
+}
+.btn-teal:hover {
+    color: #fff;
+    background-color: #1aa179;
+    border-color: #199671;
+}
+    
+.btn-orange {
+    color: #fff;
+    background-color: #fd7e14;
+    border-color: #fd7e14;
+}
+.btn-orange:hover {
+    color: #fff;
+    background-color: #da6a0f;
+    border-color: #cc640e;
+}
+    
+.btn-maroon {
+    color: #fff;
+    background-color: #8b0000;
+    border-color: #8b0000;
+}
+.btn-maroon:hover {
+    color: #fff;
+    background-color: #6a0000;
+    border-color: #5c0000;
+}
+    
+.btn-navy {
+    color: #fff;
+    background-color: #000080;
+    border-color: #000080;
+}
+.btn-navy:hover {
+    color: #fff;
+    background-color: #00005a;
+    border-color: #00004d;
+}

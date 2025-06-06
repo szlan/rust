@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>新闻列表</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 70px; }
+        .news-item { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .news-item h2 { margin-top: 0; font-size: 20px;}
+        .news-item p { font-size: 14px; color: #777; }
+        #category-nav button { margin-right: 5px; margin-bottom: 10px;}
+        .news-item img { max-width: 100%; height: auto; margin-bottom: 10px; }
+        
+        /* 分页样式 */
+        .pagination-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .pagination {
+            display: inline-flex;
+            padding-left: 0;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .pagination li {
+            display: inline;
+        }
+        
+        .pagination li a,
+        .pagination li span {
+            position: relative;
+            float: left;
+            padding: 6px 12px;
+            margin-left: -1px;
+            line-height: 1.42857143;
+            color: #337ab7;
+            text-decoration: none;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+        
+        .pagination li.active span {
+            z-index: 3;
+            color: #fff;
+            cursor: default;
+            background-color: #337ab7;
+            border-color: #337ab7;
+        }
+        
+        .pagination li.disabled span {
+            color: #777;
+            cursor: not-allowed;
+            background-color: #fff;
+            border-color: #ddd;
+        }
+        
+        .pagination li a:hover,
+        .pagination li span:hover {
+            background-color: #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">新闻聚合</a>
+            </div>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li><a href="#">主页</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="userpage.html">个人主页</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="#" onclick="logoutUser()">退出登录</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>新闻列表 <small id="current-category-title">全部</small></h1>
+        </div>
+
+        <div id="category-nav" class="text-center well well-sm">
+            <button class="btn btn-default" onclick="filterNews('all')">全部</button>
+            <button class="btn btn-danger" onclick="filterNews('健康')">健康</button>
+            <button class="btn btn-success" onclick="filterNews('国际')">国际</button>
+            <button class="btn btn-warning" onclick="filterNews('体育')">体育</button>
+            <button class="btn btn-science" onclick="filterNews('科技')">科技</button>
+            <button class="btn btn-car" onclick="filterNews('汽车')">汽车</button>
+            <button class="btn btn-education" onclick="filterNews('教育')">教育</button>
+            <button class="btn btn-navy" onclick="filterNews('财经')">财经</button>
+            <button class="btn btn-game" onclick="filterNews('游戏')">游戏</button>
+            <button class="btn btn-teal" onclick="filterNews('娱乐')">娱乐</button>
+            <button class="btn btn-purple" onclick="filterNews('军事')">军事</button>
+            <button class="btn btn-science" onclick="filterNews('科学')">科学</button>
+            <button class="btn btn-important" onclick="filterNews('要闻')">要闻</button>
+        </div>
+
+        <div id="news-container"></div>
+        <div class="pagination-container">
+            <ul id="pagination" class="pagination"></ul>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const pageSize = 10;
+        let currentCategory = 'all';
+        let allNews = [];
+
+        async function fetchNews() {
+            try {
+                let url = `/news?page=${currentPage}&page_size=${pageSize}`;
+                if (currentCategory!== 'all') {
+                    url += `&category=${currentCategory}`;
+                }
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const responseText = await response.text();
+                try {
+                    const paginatedNews = JSON.parse(responseText);
+                    allNews = paginatedNews.news;
+                    displayNews(allNews);
+                    updatePagination(paginatedNews.total_pages);
+                } catch (parseError) {
+                    console.error('解析新闻数据时出错:', parseError);
+                    console.error('响应内容:', responseText);
+                    document.getElementById('news-container').innerHTML = '<div class="alert alert-danger">解析新闻数据失败，请稍后再试。</div>';
+                }
+            } catch (error) {
+                console.error('获取新闻时出错:', error);
+                document.getElementById('news-container').innerHTML = '<div class="alert alert-danger">加载新闻失败，请稍后再试。</div>';
+            }
+        }
+
+        function displayNews(newsList) {
+            const newsContainer = document.getElementById('news-container');
+            newsContainer.innerHTML = '';
+
+            if (newsList.length === 0) {
+                newsContainer.innerHTML = '<div class="alert alert-warning">该分类下暂无新闻。</div>';
+                return;
+            }
+
+            newsList.forEach(news => {
+                const newsItem = document.createElement('div');
+                newsItem.classList.add('news-item', 'row');
+
+                const contentDiv = document.createElement('div');
+                contentDiv.classList.add('col-md-12');
+
+                // 标题和链接
+                const title = document.createElement('h2');
+                const link = document.createElement('a');
+                link.href = news.href || '#';
+                link.target = '_blank';
+                link.textContent = news.title || '无标题新闻';
+                title.appendChild(link);
+
+                // 分类和日期
+                const typeAndDate = document.createElement('p');
+                typeAndDate.innerHTML = `
+                    <span class="label label-default">${news.news_type}</span> 
+                    <span class="text-muted">- ${new Date(news.datetime).toLocaleString('zh-CN')}</span>
+                `;
+
+                // 内容摘要
+                const content = document.createElement('p');
+                content.textContent = news.content || '暂无内容';
+
+                contentDiv.appendChild(title);
+                contentDiv.appendChild(typeAndDate);
+                contentDiv.appendChild(content);
+                newsItem.appendChild(contentDiv);
+                newsContainer.appendChild(newsItem);
+            });
+        }
+
+        function updatePagination(totalPages) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            // 添加首页按钮
+            addPageButton(1, '首页');
+            
+            // 添加前一页按钮
+            if (currentPage > 1) {
+                addPageButton(currentPage - 1, '上一页');
+            } else {
+                addDisabledButton('上一页');
+            }
+
+            // 生成页码按钮（最多显示7个页码）
+            let startPage = Math.max(1, currentPage - 3);
+            let endPage = Math.min(totalPages, startPage + 6);
+            
+            if (endPage - startPage < 6 && startPage > 1) {
+                startPage = Math.max(1, endPage - 6);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                addPageButton(i);
+            }
+
+            // 添加下一页按钮
+            if (currentPage < totalPages) {
+                addPageButton(currentPage + 1, '下一页');
+            } else {
+                addDisabledButton('下一页');
+            }
+            
+            // 添加尾页按钮
+            addPageButton(totalPages, '尾页');
+        }
+
+        function addPageButton(pageNum, text = pageNum.toString()) {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#';
+            a.textContent = text;
+            a.addEventListener('click', () => {
+                currentPage = pageNum;
+                fetchNews();
+            });
+            
+            if (pageNum === currentPage) {
+                li.classList.add('active');
+                const span = document.createElement('span');
+                span.textContent = text;
+                li.appendChild(span);
+            } else {
+                li.appendChild(a);
+            }
+            
+            document.getElementById('pagination').appendChild(li);
+        }
+
+        function addDisabledButton(text) {
+            const li = document.createElement('li');
+            li.classList.add('disabled');
+            const span = document.createElement('span');
+            span.textContent = text;
+            li.appendChild(span);
+            document.getElementById('pagination').appendChild(li);
+        }
+
+        function filterNews(category) {
+            currentCategory = category;
+            currentPage = 1;
+            document.getElementById('current-category-title').textContent = category === 'all'? '全部' : category;
+            fetchNews();
+        }
+
+        function logoutUser() {
+            fetch('/user/logout', {
+                method: 'POST',
+                credentials: 'include'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    alert('退出登录失败');
+                }
+            })
+            .catch(error => {
+                console.error('退出登录时出错:', error);
+                alert('退出登录时发生错误');
+            });
+        }
+        
+        window.onload = function() {
+            fetchNews();
+        };
+    </script>
+</body>
+<style>
+    /* 自定义按钮颜色 */
+    .btn-purple {
+        color: #fff;
+        background-color: #6f42c1;
+        border-color: #6f42c1;
+    }
+    .btn-purple:hover {
+        color: #fff;
+        background-color: #5a32a3;
+        border-color: #543099;
+    }
+    
+    .btn-teal {
+        color: #fff;
+        background-color: #20c997;
+        border-color: #20c997;
+    }
+    .btn-teal:hover {
+        color: #fff;
+        background-color: #1aa179;
+        border-color: #199671;
+    }
+    
+    .btn-orange {
+        color: #fff;
+        background-color: #fd7e14;
+        border-color: #fd7e14;
+    }
+    .btn-orange:hover {
+        color: #fff;
+        background-color: #da6a0f;
+        border-color: #cc640e;
+    }
+    
+    .btn-maroon {
+        color: #fff;
+        background-color: #8b0000;
+        border-color: #8b0000;
+    }
+    .btn-maroon:hover {
+        color: #fff;
+        background-color: #6a0000;
+        border-color: #5c0000;
+    }
+    
+    .btn-navy {
+        color: #fff;
+        background-color: #000080;
+        border-color: #000080;
+    }
+    .btn-navy:hover {
+        color: #fff;
+        background-color: #00005a;
+        border-color: #00004d;
+    }
+    /* 其他按钮样式保持不变 */
+    /* 新增自定义按钮颜色 */
+        .btn-science {
+            color: #fff;
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-science:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+        .btn-car {
+            color: #fff;
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-car:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+        .btn-education {
+            color: #fff;
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-education:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        .btn-game {
+            color: #fff;
+            background-color: #e83e8c;
+            border-color: #e83e8c;
+        }
+        .btn-game:hover {
+            background-color: #d63384;
+            border-color: #c82333;
+        }
+        .btn-important {
+            color: #fff;
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-important:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+</style>
+
+</html>

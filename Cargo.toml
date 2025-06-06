@@ -1,0 +1,38 @@
+[package]
+name = "news-backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Web框架
+actix-web = "4.4.0"
+actix-rt = "2.9.0"
+actix-files = "0.6"
+env_logger = "0.10"  # 可以根据需要选择合适的版本
+log = "0.4"
+actix-session = { version = "0.10.1", features = ["cookie-session"] }
+serde_urlencoded = "0.7"
+argon2 = "0.5"
+actix-cors = "0.7.1"
+# 异步运行时
+tokio = { version = "1.32", features = ["rt-multi-thread", "macros"] }
+
+# 数据库操作
+sqlx = { version = "0.7", features = ["postgres", "runtime-tokio", "chrono"] }
+
+# 时间处理
+chrono = { version = "0.4", features = ["serde"] }
+
+# 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+
+# 环境变量
+dotenv = "0.15"
+
+# 错误处理
+thiserror = "1.0"
+
+[dev-dependencies]
+actix-rt = "2.9.0"      # 用于异步测试运行时
+serde_json = "1.0"      # 用于处理 JSON 数据
